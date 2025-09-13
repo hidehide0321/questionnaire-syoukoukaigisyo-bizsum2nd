@@ -3,60 +3,78 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>お問い合わせフォーム</title>
+  <title>参加者情報フォーム</title>
   <style>
-    :root {
-      --bg: #f7f7f8; --panel: #ffffff; --text: #1f2328; --muted: #6e7781;
-      --primary: #2563eb; --primary-hover: #1d4ed8; --danger: #dc2626;
-      --success: #059669; --border: #e5e7eb;
-    }
-    body { margin: 0; background: var(--bg); color: var(--text);
-      font-family: system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,"Hiragino Kaku Gothic ProN","Noto Sans JP","Yu Gothic UI","Yu Gothic",Meiryo,sans-serif; line-height: 1.6; }
-    .container { max-width: 720px; margin: 40px auto; padding: 24px; background: var(--panel);
-      border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 1px 2px rgba(0,0,0,.06); }
-    h1 { margin: 0 0 16px; font-size: 20px; }
-    p.desc { margin: 0 0 24px; color: var(--muted); font-size: 14px; }
-    .field { margin-bottom: 16px; }
-    label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 14px; }
-    input[type="text"], input[type="email"], textarea {
-      width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px;
-      font-size: 14px; background: #fff; color: var(--text); box-sizing: border-box;
-    }
-    textarea { min-height: 140px; resize: vertical; }
-    button[type="submit"] {
-      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-      padding: 10px 16px; background: var(--primary); color: #fff; border: none; border-radius: 8px;
-      font-size: 14px; font-weight: 600; cursor: pointer; transition: background-color .15s, opacity .15s;
-    }
-    button[type="submit"]:hover { background: var(--primary-hover); }
-    button[type="submit"]:disabled { opacity: .6; cursor: not-allowed; }
-    .status { margin-top: 12px; font-size: 14px; }
-    .status.success { color: var(--success); }
-    .status.error { color: var(--danger); }
-    .hint { color: var(--muted); font-size: 12px; margin-top: 4px; }
+    /* 見やすい最小限のスタイル */
+    :root { --bg:#f7f7f8; --panel:#fff; --text:#1f2328; --muted:#6e7781; --border:#e5e7eb;
+            --primary:#2563eb; --success:#059669; --error:#dc2626; }
+    body { margin:0; background:var(--bg); color:var(--text);
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,"Noto Sans JP","Yu Gothic UI",Meiryo,sans-serif; line-height:1.6; }
+    .container { max-width:720px; margin:40px auto; padding:24px; background:var(--panel);
+      border:1px solid var(--border); border-radius:12px; }
+    h1 { margin:0 0 12px; font-size:20px; }
+    .desc { margin:0 0 20px; color:var(--muted); font-size:14px; }
+    .field { margin-bottom:14px; }
+    label { display:block; margin-bottom:6px; font-weight:600; font-size:14px; }
+    input, textarea { width:100%; padding:10px 12px; border:1px solid var(--border); border-radius:8px;
+      font-size:14px; background:#fff; color:var(--text); box-sizing:border-box; }
+    textarea { min-height:100px; resize:vertical; }
+    button[type="submit"] { padding:10px 16px; background:var(--primary); color:#fff; border:none; border-radius:8px;
+      font-size:14px; font-weight:600; cursor:pointer; }
+    button[disabled] { opacity:.6; cursor:not-allowed; }
+    .status { margin-top:10px; font-size:14px; }
+    .status.success { color:var(--success); }
+    .status.error { color:var(--error); }
+    .hint { margin-top:4px; color:var(--muted); font-size:12px; }
   </style>
-  <!-- 後で WEB_APP_URL を実際のURLに置換してください -->
 </head>
 <body>
   <main class="container">
-    <h1>お問い合わせ</h1>
-    <p class="desc">以下のフォームに必要事項をご入力の上、送信してください。</p>
+    <h1>参加者情報</h1>
+    <p class="desc">必要事項をご入力のうえ、送信してください。</p>
 
     <form id="contactForm" novalidate>
+      <!-- 必須項目 -->
       <div class="field">
-        <label for="name">名前</label>
+        <label for="name">お名前</label>
         <input id="name" name="name" type="text" required placeholder="山田 太郎" />
       </div>
-
       <div class="field">
-        <label for="email">メールアドレス</label>
-        <input id="email" name="email" type="email" required placeholder="taro@example.com" />
-        <div class="hint">返信先として利用します。正しくご入力ください。</div>
+        <label for="furigana">フリガナ</label>
+        <input id="furigana" name="furigana" type="text" required placeholder="ヤマダ タロウ" />
+      </div>
+      <div class="field">
+        <label for="company">事業所名</label>
+        <input id="company" name="company" type="text" required placeholder="〇〇株式会社 〇〇事業所" />
+      </div>
+      <div class="field">
+        <label for="industry">業種</label>
+        <input id="industry" name="industry" type="text" required placeholder="製造業 / 小売業 など" />
+      </div>
+      <div class="field">
+        <label for="affiliation">所属団体など</label>
+        <input id="affiliation" name="affiliation" type="text" required placeholder="商工会 / 業界団体 など" />
+      </div>
+      <div class="field">
+        <label for="hometown">出身地</label>
+        <input id="hometown" name="hometown" type="text" required placeholder="東京都〇〇市 など" />
+      </div>
+      <div class="field">
+        <label for="tel">電話番号</label>
+        <input id="tel" name="tel" type="tel" required placeholder="090-1234-5678" />
       </div>
 
+      <!-- 名簿に記載しない任意項目（別シート保存） -->
       <div class="field">
-        <label for="message">メッセージ</label>
-        <textarea id="message" name="message" required placeholder="お問い合わせ内容を記入してください。"></textarea>
+        <label for="emergency">緊急連絡先（任意）</label>
+        <input id="emergency" name="emergency" type="tel" placeholder="緊急時の連絡先（ご家族等）" />
+        <div class="hint">（緊急の連絡先として事務局で管理いたします。参加者名簿には記載なし。）</div>
+      </div>
+
+      <!-- 活動自己PR（150文字）任意 -->
+      <div class="field">
+        <label for="pr">活動自己PR（150文字以内・任意）</label>
+        <textarea id="pr" name="pr" maxlength="150" placeholder="活動の内容や自己PRをご記入ください。150文字以内"></textarea>
       </div>
 
       <button type="submit" id="submitBtn">送信</button>
@@ -65,51 +83,45 @@
   </main>
 
   <script>
-    // デプロイしたGAS WebアプリのURLに置き換えてください
-    const DEFAULT_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzLSmFmf2qNHg0nDJa_K4srE47p8phz6W69reBhWOnIUU1-P5LhrEjHumXiwDw0w_W8/exec';
-    const params = new URL(window.location.href).searchParams;
-    const endpointFromQuery = params.get('endpoint');
-    const endpointFromStorage = window.localStorage.getItem('WEB_APP_URL') || '';
-    if (endpointFromQuery) {
-      try { window.localStorage.setItem('WEB_APP_URL', endpointFromQuery); } catch (_) {}
-    }
-    const WEB_APP_URL = endpointFromQuery || endpointFromStorage || DEFAULT_WEB_APP_URL;
-    
+    // 外部ホスティング: 提示いただいた GAS Web アプリ URL にPOST
+    const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzLS9-e9uph5bI3feAzUdsOybkee8pj1p_nuBJszcwlu7svG3EZzfSsxguMb7Fv4fDADg/exec';
+    const SUCCESS_MESSAGE = 'ご入力、送信しました！ありがとうございます。当日のご参加をお待ちしております。';
+
     const form = document.getElementById('contactForm');
     const submitBtn = document.getElementById('submitBtn');
     const statusEl = document.getElementById('status');
 
-    // 送信イベントハンドラ（スタートはここから）
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
 
+      // HTML標準の required/type と reportValidity() を使用
       if (!form.reportValidity()) return;
 
       const originalLabel = submitBtn.textContent;
       submitBtn.disabled = true;
-      submitBtn.textContent = '送信中...';
+      submitBtn.textContent = '送信中';
       statusEl.textContent = '';
       statusEl.className = 'status';
 
       try {
-        // CORSプリフライトを避けるため x-www-form-urlencoded を使用
-        const params = new URLSearchParams();
-        params.append('name', form.name.value.trim());
-        params.append('email', form.email.value.trim());
-        params.append('message', form.message.value.trim());
+        // application/x-www-form-urlencoded で送信
+        const body = new URLSearchParams();
+        body.append('name', form.name.value.trim());
+        body.append('furigana', form.furigana.value.trim());
+        body.append('company', form.company.value.trim());
+        body.append('industry', form.industry.value.trim());
+        body.append('affiliation', form.affiliation.value.trim());
+        body.append('hometown', form.hometown.value.trim());
+        body.append('tel', form.tel.value.trim());
+        body.append('pr', form.pr.value.trim());                // 任意（maxlength=150）
+        body.append('emergency', form.emergency.value.trim());  // 任意（別シート保存）
 
-        const res = await fetch(WEB_APP_URL, {
-          method: 'POST',
-          body: params
-        });
-
-        if (!res.ok) {
-          throw new Error('ネットワークエラー (' + res.status + ')');
-        }
+        const res = await fetch(WEB_APP_URL, { method: 'POST', body });
+        if (!res.ok) throw new Error('ネットワークエラー (' + res.status + ')');
 
         const data = await res.json();
         if (data.status === 'success') {
-          statusEl.textContent = '送信しました！ありがとうございます。';
+          statusEl.textContent = SUCCESS_MESSAGE;
           statusEl.classList.add('success');
           form.reset();
         } else {
@@ -123,7 +135,6 @@
         submitBtn.textContent = originalLabel;
       }
     });
-    // 送信イベントハンドラ（ここまで）
   </script>
 </body>
 </html>
