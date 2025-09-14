@@ -3,78 +3,197 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>参加者情報フォーム</title>
+  <title>ふなばしビジネスサミット申込フォーム</title>
+  <!-- 女性向け・やさしく洗練されたスタイル -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
-    /* 見やすい最小限のスタイル */
-    :root { --bg:#f7f7f8; --panel:#fff; --text:#1f2328; --muted:#6e7781; --border:#e5e7eb;
-            --primary:#2563eb; --success:#059669; --error:#dc2626; }
-    body { margin:0; background:var(--bg); color:var(--text);
-      font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,"Noto Sans JP","Yu Gothic UI",Meiryo,sans-serif; line-height:1.6; }
-    .container { max-width:720px; margin:40px auto; padding:24px; background:var(--panel);
-      border:1px solid var(--border); border-radius:12px; }
-    h1 { margin:0 0 12px; font-size:20px; }
-    .desc { margin:0 0 20px; color:var(--muted); font-size:14px; }
-    .field { margin-bottom:14px; }
-    label { display:block; margin-bottom:6px; font-weight:600; font-size:14px; }
-    input, textarea { width:100%; padding:10px 12px; border:1px solid var(--border); border-radius:8px;
-      font-size:14px; background:#fff; color:var(--text); box-sizing:border-box; }
-    textarea { min-height:100px; resize:vertical; }
-    button[type="submit"] { padding:10px 16px; background:var(--primary); color:#fff; border:none; border-radius:8px;
-      font-size:14px; font-weight:600; cursor:pointer; }
-    button[disabled] { opacity:.6; cursor:not-allowed; }
-    .status { margin-top:10px; font-size:14px; }
-    .status.success { color:var(--success); }
-    .status.error { color:var(--error); }
-    .hint { margin-top:4px; color:var(--muted); font-size:12px; }
+    :root {
+      /* Color palette */
+      --accent: #ec4899;   /* pink */
+      --accent-2: #f472b6; /* light pink */
+      --accent-3: #8b5cf6; /* lavender for gradient mix */
+      --bg: #fff1f2;       /* rose tint */
+      --panel: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --border: #f1f5f9;
+      --ring: #fb7185;     /* focus ring */
+      --success:#10b981;
+      --error:#ef4444;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      color: var(--text);
+      font-family: "Noto Sans JP", "Hiragino Sans", "Yu Gothic UI", Meiryo, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      line-height: 1.7;
+      background:
+        radial-gradient(1200px 600px at 10% -10%, #fdf2f8 20%, transparent 60%),
+        radial-gradient(1000px 600px at 110% 10%, #eef2ff 20%, transparent 60%),
+        linear-gradient(180deg, #fff 0%, var(--bg) 100%);
+      background-attachment: fixed;
+    }
+
+    .container {
+      max-width: 760px;
+      margin: 64px auto;
+      padding: 32px 28px;
+      /* 薄い暖色のフォーム背景 */
+      background: linear-gradient(180deg, #fffaf7 0%, #fff2ec 100%);
+      border: 1px solid #fde7df;
+      border-radius: 16px;
+      box-shadow: 0 18px 40px -20px rgba(236, 72, 153, 0.28), 0 8px 24px -16px rgba(139, 92, 246, 0.20);
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      position: relative;
+      display: inline-block;
+    }
+    h1::after {
+      content: "";
+      display: block;
+      height: 4px;
+      margin-top: 8px;
+      width: 56%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--accent), var(--accent-3));
+    }
+
+    .desc {
+      margin: 10px 0 22px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    form { display: grid; gap: 16px; }
+    .field { display: grid; gap: 8px; }
+
+    label {
+      font-weight: 600;
+      font-size: 14px;
+      color: #374151;
+    }
+    /* 必須アスタリスク（対応ブラウザで） */
+    label:has(+ input[required]),
+    label:has(+ textarea[required]) { position: relative; }
+    label:has(+ input[required])::after,
+    label:has(+ textarea[required])::after {
+      content: " *";
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    input, textarea {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      font-size: 15px;
+      background: #fff;
+      color: var(--text);
+      transition: border-color .2s ease, box-shadow .2s ease, transform .06s ease;
+    }
+    /* ベストエフォートでIMEを日本語入力初期状態に */
+    .ime-ja { ime-mode: active; }
+    .ime-kana { ime-mode: active; }
+    .ime-hira { ime-mode: active; }
+    .ime-zen { ime-mode: active; }
+    input::placeholder, textarea::placeholder { color: #9aa4b2; }
+    input:focus, textarea:focus {
+      outline: none;
+      border-color: var(--accent-2);
+      box-shadow: 0 0 0 4px color-mix(in srgb, var(--ring) 22%, transparent);
+    }
+    input:active, textarea:active { transform: translateY(0.5px); }
+    textarea { min-height: 120px; resize: vertical; }
+
+    .hint { margin-top: 4px; color: var(--muted); font-size: 12px; }
+    .hint.limit { color: var(--error); font-weight: 600; }
+
+    button[type="submit"] {
+      padding: 12px 18px;
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 40%, var(--accent-3) 100%);
+      color: #fff;
+      border: none;
+      border-radius: 999px;
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: .02em;
+      cursor: pointer;
+      box-shadow: 0 12px 24px -12px rgba(236, 72, 153, .6);
+      transition: filter .2s ease, transform .08s ease, box-shadow .2s ease;
+      width: fit-content;
+    }
+    button[type="submit"]:hover { filter: brightness(1.05); box-shadow: 0 16px 28px -14px rgba(236, 72, 153, .65); }
+    button[type="submit"]:active { transform: translateY(1px); }
+    button[disabled] { opacity: .65; cursor: not-allowed; filter: grayscale(.2) brightness(.96); }
+
+    .status { margin-top: 6px; font-size: 14px; }
+    .status.success { color: var(--success); }
+    .status.error { color: var(--error); }
+
+    /* Responsive tweaks */
+    @media (min-width: 768px) {
+      .container { padding: 40px 36px; }
+      h1 { font-size: 26px; }
+      .desc { font-size: 15px; }
+    }
   </style>
 </head>
 <body>
   <main class="container">
-    <h1>参加者情報</h1>
+    <h1>ふなばしビジネスサミット申込フォーム</h1>
     <p class="desc">必要事項をご入力のうえ、送信してください。</p>
 
     <form id="contactForm" novalidate>
       <!-- 必須項目 -->
       <div class="field">
         <label for="name">お名前</label>
-        <input id="name" name="name" type="text" required placeholder="山田 太郎" />
+        <input id="name" name="name" type="text" required placeholder="船橋太郎" class="ime-ja" lang="ja" autocapitalize="off" />
       </div>
       <div class="field">
         <label for="furigana">フリガナ</label>
-        <input id="furigana" name="furigana" type="text" required placeholder="ヤマダ タロウ" />
+        <input id="furigana" name="furigana" type="text" required placeholder="フナバシタロウ" class="ime-kana" lang="ja" inputmode="kana" autocapitalize="off" />
+      </div>
+      <div class="field">
+        <label for="email">メールアドレス</label>
+        <input id="email" name="email" type="email" inputmode="email" autocomplete="email" required placeholder="name@example.com" />
       </div>
       <div class="field">
         <label for="company">事業所名</label>
-        <input id="company" name="company" type="text" required placeholder="〇〇株式会社 〇〇事業所" />
+        <input id="company" name="company" type="text" required placeholder="〇〇株式会社 〇〇事業所" class="ime-ja" lang="ja" autocapitalize="off" />
       </div>
       <div class="field">
         <label for="industry">業種</label>
-        <input id="industry" name="industry" type="text" required placeholder="製造業 / 小売業 など" />
+        <input id="industry" name="industry" type="text" required placeholder="行政書士 / 飲食業 / 小売業 など" class="ime-ja ime-zen" lang="ja" inputmode="kana" autocapitalize="off" />
       </div>
       <div class="field">
         <label for="affiliation">所属団体など</label>
-        <input id="affiliation" name="affiliation" type="text" required placeholder="商工会 / 業界団体 など" />
+        <input id="affiliation" name="affiliation" type="text" required placeholder="商工会議所 / 業界団体 など" class="ime-ja" lang="ja" autocapitalize="off" />
       </div>
       <div class="field">
         <label for="hometown">出身地</label>
-        <input id="hometown" name="hometown" type="text" required placeholder="東京都〇〇市 など" />
+        <input id="hometown" name="hometown" type="text" required placeholder="東京都〇〇市 など" class="ime-ja" lang="ja" autocapitalize="off" />
       </div>
       <div class="field">
         <label for="tel">電話番号</label>
-        <input id="tel" name="tel" type="tel" required placeholder="090-1234-5678" />
-      </div>
-
-      <!-- 名簿に記載しない任意項目（別シート保存） -->
-      <div class="field">
-        <label for="emergency">緊急連絡先（任意）</label>
-        <input id="emergency" name="emergency" type="tel" placeholder="緊急時の連絡先（ご家族等）" />
+        <input id="tel" name="tel" type="tel" required placeholder="09012345678" />
         <div class="hint">（緊急の連絡先として事務局で管理いたします。参加者名簿には記載なし。）</div>
       </div>
 
       <!-- 活動自己PR（150文字）任意 -->
       <div class="field">
-        <label for="pr">活動自己PR（150文字以内・任意）</label>
-        <textarea id="pr" name="pr" maxlength="150" placeholder="活動の内容や自己PRをご記入ください。150文字以内"></textarea>
+        <label for="pr">活動・自己PR（150文字以内・任意）</label>
+        <textarea id="pr" name="pr" maxlength="150" placeholder="活動・自己PRをご記入ください。150文字以内" class="ime-ja ime-hira ime-zen" lang="ja" inputmode="kana" autocapitalize="off" spellcheck="false"></textarea>
+        <div class="hint" id="prCounter" aria-live="polite">0/150 文字</div>
       </div>
 
       <button type="submit" id="submitBtn">送信</button>
@@ -84,18 +203,114 @@
 
   <script>
     // 外部ホスティング: 提示いただいた GAS Web アプリ URL にPOST
-    const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzLS9-e9uph5bI3feAzUdsOybkee8pj1p_nuBJszcwlu7svG3EZzfSsxguMb7Fv4fDADg/exec';
+    const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyqGRutYiQYrzwf6MBhzr5i78kTp44MXj8cY4BWjTE4M74jlwmdaOss0ZIiu4tJoqslPg/exec';
     const SUCCESS_MESSAGE = 'ご入力、送信しました！ありがとうございます。当日のご参加をお待ちしております。';
 
     const form = document.getElementById('contactForm');
     const submitBtn = document.getElementById('submitBtn');
     const statusEl = document.getElementById('status');
+    const PR_MAX = 150;
+    const prEl = document.getElementById('pr');
+    const prCounter = document.getElementById('prCounter');
+    // ブラウザのmaxlengthではなくJSで上限を管理するため、属性を外す
+    if (prEl) { prEl.removeAttribute('maxlength'); }
+    const furiganaEl = document.getElementById('furigana');
+    const industryEl = document.getElementById('industry');
+
+    // ひらがな→カタカナ、半角カタカナ→全角カタカナ へ変換
+    function toKatakanaFullWidth(str) {
+      if (!str) return '';
+      // ひらがなをカタカナへ（Unicode: +0x60）
+      const toKana = str.replace(/[ぁ-ん]/g, ch => String.fromCharCode(ch.charCodeAt(0) + 0x60));
+      // NFKC 正規化で半角カナ等を全角へ統合
+      return toKana.normalize('NFKC');
+    }
+
+    function enforceFuriganaKana() {
+      if (!furiganaEl) return;
+      const before = furiganaEl.value;
+      const after = toKatakanaFullWidth(before);
+      if (before !== after) {
+        furiganaEl.value = after;
+        try { furiganaEl.setSelectionRange(after.length, after.length); } catch (_) {}
+      }
+    }
+
+    if (furiganaEl) {
+      furiganaEl.addEventListener('input', enforceFuriganaKana);
+      // 初期値がある場合にも統一
+      enforceFuriganaKana();
+    }
+
+    // 半角→全角（ASCII、半角カナなど）へ正規化
+    function toZenkaku(str) {
+      if (!str) return '';
+      // まずはNFKCで半角カナなどを正規化
+      const nfkc = str.normalize('NFKC');
+      // ASCII可視文字（0x21-0x7E）とスペース（0x20）を全角へ
+      let out = '';
+      for (const ch of nfkc) {
+        const code = ch.charCodeAt(0);
+        if (code === 0x20) { out += String.fromCharCode(0x3000); continue; }
+        if (code >= 0x21 && code <= 0x7E) { out += String.fromCharCode(code + 0xFEE0); }
+        else { out += ch; }
+      }
+      return out;
+    }
+
+    function enforceZenkakuOn(el) {
+      if (!el) return;
+      const before = el.value;
+      const after = toZenkaku(before);
+      if (before !== after) {
+        el.value = after;
+        try { el.setSelectionRange(after.length, after.length); } catch (_) {}
+      }
+    }
+
+    function updatePrCount() {
+      const len = prEl.value.length;
+      if (prCounter) {
+        prCounter.textContent = `${len}/${PR_MAX} 文字`;
+        prCounter.classList.toggle('limit', len >= PR_MAX);
+      }
+    }
+
+    if (prEl) {
+      prEl.addEventListener('input', () => { enforceZenkakuOn(prEl); updatePrCount(); });
+      // 初期表示時にも反映
+      enforceZenkakuOn(prEl);
+      updatePrCount();
+    }
+
+    // PR 150字超過時のポップアップと切り詰め
+    if (prEl) {
+      prEl.addEventListener('input', () => {
+        if (prEl.value.length > PR_MAX) {
+          alert('文字数オーバー');
+          prEl.value = prEl.value.slice(0, PR_MAX);
+          updatePrCount();
+        }
+      });
+    }
+
+    if (industryEl) {
+      industryEl.addEventListener('input', () => enforceZenkakuOn(industryEl));
+      enforceZenkakuOn(industryEl);
+    }
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
 
       // HTML標準の required/type と reportValidity() を使用
       if (!form.reportValidity()) return;
+
+      // 念のため150文字超のチェック（maxlengthで制御されますが保険で）
+      if (prEl && prEl.value.length > PR_MAX) {
+        statusEl.textContent = `エラー: 活動・自己PRは${PR_MAX}文字以内で入力してください。`;
+        statusEl.className = 'status error';
+        return;
+      }
 
       const originalLabel = submitBtn.textContent;
       submitBtn.disabled = true;
@@ -108,22 +323,22 @@
         const body = new URLSearchParams();
         body.append('name', form.name.value.trim());
         body.append('furigana', form.furigana.value.trim());
+        body.append('email', form.email.value.trim());
         body.append('company', form.company.value.trim());
         body.append('industry', form.industry.value.trim());
         body.append('affiliation', form.affiliation.value.trim());
         body.append('hometown', form.hometown.value.trim());
         body.append('tel', form.tel.value.trim());
         body.append('pr', form.pr.value.trim());                // 任意（maxlength=150）
-        body.append('emergency', form.emergency.value.trim());  // 任意（別シート保存）
 
         const res = await fetch(WEB_APP_URL, { method: 'POST', body });
         if (!res.ok) throw new Error('ネットワークエラー (' + res.status + ')');
 
         const data = await res.json();
         if (data.status === 'success') {
-          statusEl.textContent = SUCCESS_MESSAGE;
-          statusEl.classList.add('success');
-          form.reset();
+          // 完了画面へ遷移
+          window.location.href = 'complete.html';
+          return;
         } else {
           throw new Error(data.message || '送信に失敗しました。');
         }
