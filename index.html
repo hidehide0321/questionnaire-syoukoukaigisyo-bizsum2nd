@@ -209,9 +209,63 @@
     const form = document.getElementById('contactForm');
     const submitBtn = document.getElementById('submitBtn');
     const statusEl = document.getElementById('status');
-    const PR_MAX = 150;
+    const PR_MAX = 100;
     const prEl = document.getElementById('pr');
     const prCounter = document.getElementById('prCounter');
+    // Rename label/placeholder: 会社名 -> 事業所名
+    try {
+      const __companyLabel = document.querySelector('label[for="company"]');
+      const __companyInput = document.getElementById('company');
+      if (__companyLabel) __companyLabel.textContent = '事業所名';
+      if (__companyInput) __companyInput.setAttribute('placeholder', '事業所名');
+    } catch (_) {}
+
+    // お名前（姓と名の間に全角スペース）
+    try {
+      const __nameLabel = document.querySelector('label[for="name"]');
+      const __nameInput = document.getElementById('name');
+      if (__nameLabel) __nameLabel.textContent = 'お名前';
+      if (__nameInput) {
+        __nameInput.setAttribute('placeholder', '姓　名');
+        // パターン: 少なくとも1つの全角スペースを含む
+        __nameInput.setAttribute('pattern', '^.+　.+$');
+        __nameInput.setAttribute('title', '姓と名の間に全角スペース（　）を入れてください。');
+        // 案内ヒントを付与
+        const p = __nameInput.closest('.field') || __nameInput.parentElement;
+        if (p && !p.querySelector('.hint.name-hint')) {
+          const hint = document.createElement('div');
+          hint.className = 'hint name-hint';
+          hint.textContent = '姓と名の間に全角スペース（　）を入れてください。';
+          p.appendChild(hint);
+        }
+        const normalizeNameSpace = (s) => {
+          if (!s) return '';
+          // 連続する空白を1つの半角スペースにしてから全角へ
+          const collapsed = s.replace(/\s+/g, ' ').trim();
+          const full = collapsed.replace(/ /g, '　');
+          return full.replace(/^　+|　+$/g, '').replace(/　{2,}/g, '　');
+        };
+        // live input: allow trailing/leading space while typing
+        const normalizeNameSpaceLive = (s) => {
+          if (!s) return '';
+          const collapsed = s.replace(/\s+/g, ' ');
+          const full = collapsed.replace(/ /g, '\u3000');
+          return full.replace(/\u3000{2,}/g, '\u3000');
+        };
+        const enforceNameSpace = (ev) => {
+          const before = __nameInput.value;
+          const after = (ev && ev.type === 'blur') ? normalizeNameSpace(before) : normalizeNameSpaceLive(before);
+          if (before !== after) {
+            __nameInput.value = after;
+            try { __nameInput.setSelectionRange(after.length, after.length); } catch (_) {}
+          }
+        };
+        __nameInput.addEventListener('input', enforceNameSpace);
+        __nameInput.addEventListener('blur', enforceNameSpace);
+        // 初期値にも適用
+        enforceNameSpace();
+      }
+    } catch (_) {}
     // ブラウザのmaxlengthではなくJSで上限を管理するため、属性を外す
     if (prEl) { prEl.removeAttribute('maxlength'); }
     const furiganaEl = document.getElementById('furigana');
@@ -326,9 +380,8 @@
         body.append('email', form.email.value.trim());
         body.append('company', form.company.value.trim());
         body.append('industry', form.industry.value.trim());
-        body.append('affiliation', form.affiliation.value.trim());
-        body.append('hometown', form.hometown.value.trim());
         body.append('tel', form.tel.value.trim());
+        body.append('partners', form.partners ? form.partners.value.trim() : '');
         body.append('pr', form.pr.value.trim());                // 任意（maxlength=150）
 
         const res = await fetch(WEB_APP_URL, { method: 'POST', body });
@@ -350,6 +403,451 @@
         submitBtn.textContent = originalLabel;
       }
     });
+  </script>
+  <script>
+    // 強制クリーンアップ: メール欄のヒント文を完全に削除
+    (function () {
+      try {
+        const el = document.getElementById('email');
+        if (!el) return;
+        const wrap = el.closest('.field') || el.parentElement;
+        if (!wrap) return;
+        // ヒント要素全てを削除
+        wrap.querySelectorAll('.hint').forEach(h => h.remove());
+      } catch (_) {}
+    })();
+  </script>
+  <script>
+    // 削除: メールアドレスのヒント（.email-hint）を表示から除去
+    (function () {
+      try {
+        const el = document.getElementById('email');
+        if (!el) return;
+        const wrap = el.closest('.field') || el.parentElement;
+        if (!wrap) return;
+        const hint = wrap.querySelector('.hint.email-hint');
+        if (hint) hint.remove();
+      } catch (_) {}
+    })();
+  </script>
+  <script>
+    // 最終上書き: （　）を含む案内文を削除した文言で統一（お名前/フリガナ）
+    (function () {
+      try {
+        var nameInput = document.getElementById('name');
+        if (nameInput) {
+          nameInput.setAttribute('title', '姓と名の間に全角スペースを入れてください。');
+          var nWrap = nameInput.closest('.field') || nameInput.parentElement;
+          var nHint = nWrap && nWrap.querySelector('.hint.name-hint');
+          if (nHint) nHint.textContent = '姓と名の間に全角スペースを入れてください。';
+        }
+        var kanaInput = document.getElementById('furigana');
+        if (kanaInput) {
+          kanaInput.setAttribute('title', '全角カタカナで、姓と名の間に全角スペースを入れてください。');
+          var kWrap = kanaInput.closest('.field') || kanaInput.parentElement;
+          var kHint = kWrap && kWrap.querySelector('.hint.furigana-hint');
+          if (kHint) kHint.textContent = '全角カタカナで、姓と名の間に全角スペースを入れてください。';
+        }
+      } catch (_) {}
+    })();
+  </script>
+  <script>
+    // 表記削除: 業種のヒント文「全角で入力してください（例：ＩＴ製造建設など）。」を削除
+    (function () {
+      try {
+        const el = document.getElementById('industry');
+        if (!el) return;
+        // ヒント要素（industry-hint）を削除
+        const wrap = el.closest('.field') || el.parentElement;
+        const hint = wrap && wrap.querySelector('.hint.industry-hint');
+        if (hint) hint.remove();
+        // title属性に同文言がある場合はクリア
+        if (el.hasAttribute('title')) el.removeAttribute('title');
+      } catch (_) {}
+    })();
+  </script>
+  <script>
+    // 表記削除: 旧電話番号ヒント（緊急連絡先の注意文）を除去
+    (function () {
+      try {
+        const tel = document.getElementById('tel');
+        if (!tel) return;
+        const wrap = tel.closest('.field') || tel.parentElement;
+        if (!wrap) return;
+        const hints = wrap.querySelectorAll('.hint');
+        hints.forEach((h) => { if (!h.classList.contains('tel-hint')) h.remove(); });
+      } catch (_) {}
+    })();
+  </script>
+  <script>
+    // 表記調整: メールのヒント文を指定文言に統一
+    (function () {
+      try {
+        const el = document.getElementById('email');
+        if (!el) return;
+        const wrap = el.closest('.field') || el.parentElement;
+        if (!wrap) return;
+        let hint = wrap.querySelector('.hint.email-hint');
+        if (!hint) {
+          hint = document.createElement('div');
+          hint.className = 'hint email-hint';
+          wrap.appendChild(hint);
+        }
+        hint.textContent = '半角：全角や空白は自動で正規化します（例: name@example.com）。';
+      } catch (_) {}
+    })();
+  </script>
+  <script>
+    // 表記調整: 「（　）」なしの案内文に統一（お名前/フリガナ）
+    (function () {
+      try {
+        const nameInput = document.getElementById('name');
+        if (nameInput) {
+          nameInput.setAttribute('title', '姓と名の間に全角スペースを入れてください。');
+          const hint = (nameInput.closest('.field') || nameInput.parentElement)?.querySelector('.hint.name-hint');
+          if (hint) hint.textContent = '姓と名の間に全角スペースを入れてください。';
+        }
+        const kanaInput = document.getElementById('furigana');
+        if (kanaInput) {
+          kanaInput.setAttribute('title', '全角カタカナで、姓と名の間に全角スペースを入れてください。');
+          const hint = (kanaInput.closest('.field') || kanaInput.parentElement)?.querySelector('.hint.furigana-hint');
+          if (hint) hint.textContent = '全角カタカナで、姓と名の間に全角スペースを入れてください。';
+        }
+      } catch (_) {}
+    })();
+  </script>
+  <script>
+    // 削除対応: 「所属」「出身地」フィールドをフォームから取り除く（必須回避のため）
+    (function () {
+      try {
+        var rm = function (id) {
+          var el = document.getElementById(id);
+          if (el) {
+            var wrap = el.closest('.field') || el.parentElement;
+            if (wrap && wrap.parentElement) wrap.parentElement.removeChild(wrap);
+          }
+        };
+        rm('affiliation');
+        rm('hometown');
+      } catch (_) {}
+    })();
+  </script>
+  <script>
+    // 追加: フリガナのガイドと正規化（全角カタカナ＋全角スペース）
+    (function () {
+      try {
+        const el = document.getElementById('furigana');
+        const lbl = document.querySelector('label[for="furigana"]');
+        if (lbl) lbl.textContent = 'フリガナ';
+        if (!el) return;
+        // 表示・バリデーション
+        el.setAttribute('placeholder', 'セイ　メイ');
+        el.setAttribute('pattern', '^[ァ-ヶー・]+　[ァ-ヶー・]+$');
+        el.setAttribute('title', '全角カタカナで、姓と名の間に全角スペース（　）を入れてください。');
+        const wrap = el.closest('.field') || el.parentElement;
+        if (wrap && !wrap.querySelector('.hint.furigana-hint')) {
+          const hint = document.createElement('div');
+          hint.className = 'hint furigana-hint';
+          hint.textContent = '全角カタカナで、姓と名の間に全角スペース（　）を入れてください。';
+          wrap.appendChild(hint);
+        }
+        // 正規化
+        // 空白の正規化（ライブはトリムせず／確定時はトリム）
+        const convertKanaForSpace = (s) => (typeof toKatakanaFullWidth === 'function') ? toKatakanaFullWidth(s) : s;
+        const normalizeKanaSpaceLive = (s) => {
+          const collapsed = s.replace(/\s+/g, ' ');
+          const full = collapsed.replace(/ /g, '\u3000');
+          return full.replace(/\u3000{2,}/g, '\u3000');
+        };
+        const normalizeKanaSpaceFinal = (s) => {
+          const collapsed = s.replace(/\s+/g, ' ');
+          const full = collapsed.replace(/ /g, '\u3000');
+          return full.replace(/^\u3000+|\u3000+$/g, '').replace(/\u3000{2,}/g, '\u3000');
+        };
+        const enforceKanaSpace = (ev) => {
+          const before = el.value || '';
+          const base = convertKanaForSpace(before);
+          const after = (ev && ev.type === 'blur') ? normalizeKanaSpaceFinal(base) : normalizeKanaSpaceLive(base);
+          if (before !== after) {
+            el.value = after;
+            try { el.setSelectionRange(after.length, after.length); } catch (_) {}
+          }
+        };
+        const normalizeKanaSpace = () => {
+          const before = el.value || '';
+          // 既存の toKatakanaFullWidth がグローバルにある前提
+          const toKana = (typeof toKatakanaFullWidth === 'function') ? toKatakanaFullWidth(before) : before;
+          const collapsed = toKana.replace(/\s+/g, ' ').trim();
+          const zen = collapsed.replace(/ /g, '　').replace(/^　+|　+$/g, '').replace(/　{2,}/g, '　');
+          if (before !== zen) {
+            el.value = zen;
+            try { el.setSelectionRange(zen.length, zen.length); } catch (_) {}
+          }
+        };
+        el.addEventListener('input', enforceKanaSpace);
+        el.addEventListener('blur', enforceKanaSpace);
+        enforceKanaSpace();
+      } catch (_) {}
+    })();
+  </script>
+  <script>
+    // 追加: 電話番号（半角数字＋ハイフン必須）のガイドと整形
+    (function () {
+      try {
+        const el = document.getElementById('tel');
+        const lbl = document.querySelector('label[for="tel"]');
+        if (lbl) lbl.textContent = '電話番号';
+        if (!el) return;
+        el.setAttribute('placeholder', '090-1234-5678');
+        el.setAttribute('inputmode', 'numeric');
+        // 0から始まる国内番号を想定。2-4-4, 3-3-4, 3-4-4, 4-3-3, 4-4-3 を広めに許容
+        el.setAttribute('pattern', '^0[0-9]{1,4}-[0-9]{2,4}-[0-9]{3,4}$');
+        el.setAttribute('title', '半角数字とハイフンで入力してください（例: 090-1234-5678）。');
+        const wrap = el.closest('.field') || el.parentElement;
+        if (wrap && !wrap.querySelector('.hint.tel-hint')) {
+          const hint = document.createElement('div');
+          hint.className = 'hint tel-hint';
+          hint.textContent = '半角：ハイフンを入れて入力してください（例: 090-1234-5678）。';
+          wrap.appendChild(hint);
+        }
+
+        const unify = (s) => {
+          if (!s) return '';
+          const nfkc = s.normalize('NFKC');
+          const normDash = nfkc.replace(/[ー―ｰ‐–—−]/g, '-');
+          const filtered = normDash.replace(/[^0-9-]/g, '');
+          return filtered.replace(/-+/g, '-');
+        };
+
+        const formatJPPhone = (digits) => {
+          const d = (digits || '').replace(/\D/g, '');
+          if (d.length === 11 && /^(070|080|090)/.test(d)) {
+            return d.replace(/^(\d{3})(\d{4})(\d{4})$/, '$1-$2-$3');
+          }
+          if (d.length === 10) {
+            if (/^(03|06)/.test(d)) {
+              return d.replace(/^(\d{2})(\d{4})(\d{4})$/, '$1-$2-$3');
+            }
+            if (/^(0120)/.test(d)) {
+              return d.replace(/^(\d{4})(\d{3})(\d{3})$/, '$1-$2-$3');
+            }
+            if (/^(0800)/.test(d)) {
+              return d.replace(/^(\d{4})(\d{4})(\d{2,3})$/, '$1-$2-$3');
+            }
+            return d.replace(/^(\d{3})(\d{3})(\d{4})$/, '$1-$2-$3');
+          }
+          return d;
+        };
+
+        const onInput = () => {
+          const before = el.value || '';
+          const after = unify(before);
+          if (before !== after) {
+            el.value = after;
+            try { el.setSelectionRange(after.length, after.length); } catch (_) {}
+          }
+        };
+        const onBlur = () => {
+          const digits = (el.value || '').replace(/\D/g, '');
+          if (digits.length === 10 || digits.length === 11) {
+            el.value = formatJPPhone(digits);
+          } else {
+            onInput();
+          }
+        };
+        el.addEventListener('input', onInput);
+        el.addEventListener('blur', onBlur);
+        onInput();
+      } catch (_) {}
+    })();
+  </script>
+  <script>
+    // 追加: メールアドレス（半角・NFKC正規化・不要空白除去）
+    (function () {
+      try {
+        const el = document.getElementById('email');
+        const lbl = document.querySelector('label[for="email"]');
+        if (lbl) lbl.textContent = 'メールアドレス';
+        if (!el) return;
+        el.setAttribute('placeholder', 'name@example.com');
+        el.setAttribute('autocapitalize', 'off');
+        el.setAttribute('spellcheck', 'false');
+        // 最低限のパターン: @ と . を含む
+        el.setAttribute('pattern', '^[^\x00-\x20@]+@[^\x00-\x20@]+\.[^\x00-\x20@]+$');
+        el.setAttribute('title', '半角で正しいメールアドレスを入力してください（例: name@example.com）。');
+        const wrap = el.closest('.field') || el.parentElement;
+        if (wrap && !wrap.querySelector('.hint.email-hint')) {
+          const hint = document.createElement('div');
+          hint.className = 'hint email-hint';
+          hint.textContent = '半角：全角や空白は自動で正規化します（例: name@example.com）。';
+          wrap.appendChild(hint);
+        }
+
+        const normalizeEmail = (s) => {
+          if (!s) return '';
+          // NFKCで全角→半角、全角＠/．などを正規化、空白削除
+          const nfkc = s.normalize('NFKC');
+          const replaced = nfkc
+            .replace(/[＠]/g, '@')
+            .replace(/[．。｡]/g, '.')
+            .replace(/[，、､]/g, ',')
+            .replace(/\s+/g, '');
+          // ドメインは小文字化、ローカル部はそのまま
+          const parts = replaced.split('@');
+          if (parts.length === 2) {
+            parts[1] = parts[1].toLowerCase();
+            return parts.join('@');
+          }
+          return replaced;
+        };
+
+        const onInput = () => {
+          const before = el.value || '';
+          const after = normalizeEmail(before);
+          if (before !== after) {
+            el.value = after;
+            try { el.setSelectionRange(after.length, after.length); } catch (_) {}
+          }
+        };
+        el.addEventListener('input', onInput);
+        el.addEventListener('blur', onInput);
+        onInput();
+      } catch (_) {}
+    })();
+  </script>
+  <script>
+    // 追加: 業種（表示の統一とガイド表示）
+    (function () {
+      try {
+        const el = document.getElementById('industry');
+        const lbl = document.querySelector('label[for="industry"]');
+        if (lbl) lbl.textContent = '業種';
+        if (!el) return;
+        el.setAttribute('placeholder', '業種（例：IT・製造・建設 など）');
+        // 入力は全角に正規化されます（既存の enforceZenkakuOn を利用）
+        el.setAttribute('title', '全角で入力してください（例：ＩＴ・製造・建設 など）。');
+        el.setAttribute('inputmode', 'text');
+        const wrap = el.closest('.field') || el.parentElement;
+        if (wrap && !wrap.querySelector('.hint.industry-hint')) {
+          const hint = document.createElement('div');
+          hint.className = 'hint industry-hint';
+          hint.textContent = '全角で入力してください（例：ＩＴ・製造・建設 など）。';
+          wrap.appendChild(hint);
+        }
+      } catch (_) {}
+    })();
+  </script>
+  <script>
+    // 追加: 活動自己PR（100文字）に文言とプレースホルダを更新
+    (function () {
+      try {
+        const el = document.getElementById('pr');
+        const lbl = document.querySelector('label[for="pr"]');
+        if (lbl) lbl.textContent = '活動自己PR（100文字）';
+        if (el) el.setAttribute('placeholder', '活動自己PRを100文字以内でご記入ください');
+      } catch (_) {}
+    })();
+  </script>
+  <script>
+    // 追加: 「協業したい事業者」入力フィールド（任意）をPR欄の直前に挿入
+    (function () {
+      try {
+        const form = document.getElementById('contactForm');
+        if (!form) return;
+        const prField = document.querySelector('label[for="pr"]');
+        const prWrap = prField ? prField.closest('.field') : null;
+        if (!prWrap) return;
+
+        const wrap = document.createElement('div');
+        wrap.className = 'field';
+
+        const label = document.createElement('label');
+        label.setAttribute('for', 'partners');
+        label.textContent = '協業したい事業者';
+
+        const input = document.createElement('input');
+        input.id = 'partners';
+        input.name = 'partners';
+        input.type = 'text';
+        input.className = 'ime-ja';
+        input.lang = 'ja';
+        input.autocapitalize = 'off';
+        input.placeholder = '例：〇〇建設、△△製作所 など（任意）';
+
+        const hint = document.createElement('div');
+        hint.className = 'hint';
+        hint.textContent = '任意。複数ある場合は「、」で区切ってください。';
+
+        wrap.appendChild(label);
+        wrap.appendChild(input);
+        wrap.appendChild(hint);
+
+        // PRの直後に挿入（入れ替え）
+        form.insertBefore(wrap, prWrap.nextSibling);
+      } catch (_) {}
+    })();
+  </script>
+  <script>
+    // 追加: メールのヒントとタイトルに含まれる例文を削除
+    (function () {
+      try {
+        const el = document.getElementById('email');
+        if (el) el.removeAttribute('title');
+        const wrap = el ? (el.closest('.field') || el.parentElement) : null;
+        if (wrap) {
+          const hint = wrap.querySelector('.hint.email-hint');
+          if (hint) hint.remove();
+        }
+      } catch (_) {}
+    })();
+  </script>
+  <script>
+    // 追加: 業界の「全角で入力してください（例：ＩＴ製造建設など）。」の文言を削除
+    (function () {
+      try {
+        const el = document.getElementById('industry');
+        if (!el) return;
+        const t = el.getAttribute('title');
+        if (t && t.indexOf('全角で入力してください') !== -1) {
+          el.removeAttribute('title');
+        }
+        const wrap = el.closest('.field') || el.parentElement;
+        if (!wrap) return;
+        wrap.querySelectorAll('.hint').forEach(function(h){
+          const text = (h.textContent || '');
+          if (text.indexOf('全角で入力してください') !== -1) {
+            const newText = text.replace(/全角で入力してください（.*?）。?/g, '').trim();
+            if (newText) {
+              h.textContent = newText;
+            } else {
+              h.remove();
+            }
+          }
+        });
+      } catch (_) {}
+    })();
+  </script>
+  <script>
+    // 追加: ふりがな案内の（　）を削除（全角スペースの括弧表記を除去）
+    (function () {
+      try {
+        const el = document.getElementById('furigana');
+        if (!el) return;
+        const t = el.getAttribute('title');
+        if (t && /（　）/.test(t)) {
+          el.setAttribute('title', t.replace(/（　）/g, ''));
+        }
+        const wrap = el.closest('.field') || el.parentElement;
+        if (wrap) {
+          wrap.querySelectorAll('.hint').forEach(function(h){
+            const text = h.textContent || '';
+            if (/（　）/.test(text)) {
+              h.textContent = text.replace(/（　）/g, '');
+            }
+          });
+        }
+      } catch (_) {}
+    })();
   </script>
 </body>
 </html>

@@ -43,6 +43,12 @@ function doPost(e) {
 
     // ヘッダー名→列インデックスの辞書（0-based）
     var idx = indexMap(headers);
+    // Ensure optional column for 協業したい事業者 exists
+    var __partnersHeader = '協業したい事業者';
+    if (headers.indexOf(__partnersHeader) === -1) {
+      headers.push(__partnersHeader);
+      sh.getRange(1, headers.length, 1, 1).setValue(__partnersHeader);
+    }
     var prCol = idx['活動・自己PR'];
     if (prCol == null) prCol = headers.indexOf('活動自己PR'); // 旧表記対応
     if (prCol < 0) throw new Error('ヘッダーに「活動・自己PR」列がありません');
@@ -60,6 +66,13 @@ function doPost(e) {
     if (idx['出身地'] >= 0)         row[idx['出身地']] = (params.hometown || '');
     if (idx['電話番号'] >= 0)       row[idx['電話番号']] = (params.tel || '');
     if (prCol >= 0)                  row[prCol] = (params.pr || '');
+    // Fallback: support new label '活動自己PR'
+    try {
+      var __altPrIdx = headers.indexOf('活動自己PR');
+      if (__altPrIdx >= 0) row[__altPrIdx] = (params.pr || '');
+    } catch (_ignore) {}
+    var __partnersIdx = headers.indexOf(__partnersHeader);
+    if (__partnersIdx >= 0)          row[__partnersIdx] = (params.partners || '');
 
     // email列のフォールバック（英語系の別名列がある場合にも書き込む）
     // 既に「メールアドレス」列がある場合はそちらを優先し、
