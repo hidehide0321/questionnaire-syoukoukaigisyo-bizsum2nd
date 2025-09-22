@@ -849,5 +849,242 @@
       } catch (_) {}
     })();
   </script>
+  <script>
+    // 参加者追加ボタンと動的フィールド生成
+    (function () {
+      try {
+        var form = document.getElementById('contactForm');
+        if (!form) return;
+
+        // スタイル（小さく右端に配置）を注入
+        try {
+          if (!document.getElementById('__add_participant_css')) {
+            var style = document.createElement('style');
+            style.id = '__add_participant_css';
+            style.textContent = [
+              '#addParticipantBtn, .add-participant-btn {',
+              '  justify-self: end;',
+              '  align-self: center;',
+              '  padding: 6px 10px;',
+              '  font-size: 12px;',
+              '  font-weight: 700;',
+              '  border-radius: 999px;',
+              '  border: 1px solid var(--border);',
+              '  background: #fff;',
+              '  color: var(--accent);',
+              '}',
+              '.add-participant-btn:hover {',
+              '  border-color: var(--accent-2);',
+              '  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ring) 14%, transparent);',
+              '}',
+              '.add-participant-btn:disabled {',
+              '  opacity: .55;',
+              '  cursor: not-allowed;',
+              '}'
+            ].join('\n');
+            document.head.appendChild(style);
+          }
+        } catch (_) {}
+
+        var baseName = document.getElementById('name');
+        var baseKana = document.getElementById('furigana');
+        if (!baseName || !baseKana) return;
+
+        var nameFieldWrap = baseName.closest('.field') || baseName.parentElement;
+        var kanaFieldWrap = baseKana.closest('.field') || baseKana.parentElement;
+
+        // 直下に「参加者追加」ボタンを設置（なければ作成）
+        var addBtn = document.getElementById('addParticipantBtn');
+        if (!addBtn) {
+          addBtn = document.createElement('button');
+          addBtn.id = 'addParticipantBtn';
+          addBtn.type = 'button';
+          addBtn.textContent = '参加者追加';
+          addBtn.classList.add('add-participant-btn');
+          if (kanaFieldWrap && kanaFieldWrap.parentElement) {
+            kanaFieldWrap.parentElement.insertBefore(addBtn, kanaFieldWrap.nextSibling);
+          } else {
+            form.insertBefore(addBtn, form.firstChild);
+          }
+        }
+
+        var MAX_ADDITIONAL = 2; // name-2/name-3 まで
+
+        function copyInputAttributes(src, dest) {
+          try {
+            dest.className = src.className || '';
+            if (src.required) dest.required = true;
+            ['pattern','title','lang','inputmode','autocapitalize','autocomplete','type'].forEach(function(attr){
+              if (src.hasAttribute && src.hasAttribute(attr)) {
+                dest.setAttribute(attr, src.getAttribute(attr));
+              }
+            });
+          } catch (_) {}
+        }
+
+        function normalizeFWLive(s) {
+          if (!s) return '';
+          var collapsed = s.replace(/\s+/g, ' ');
+          return collapsed.replace(/ /g, '\u3000').replace(/\u3000{2,}/g, '\u3000');
+        }
+        function normalizeFWFinal(s) {
+          if (!s) return '';
+          var collapsed = s.replace(/\s+/g, ' ').trim();
+          var full = collapsed.replace(/ /g, '\u3000');
+          return full.replace(/^\u3000+|\u3000+$/g, '').replace(/\u3000{2,}/g, '\u3000');
+        }
+
+        function attachNameHandlers(input) {
+          var onEdit = function (ev) {
+            var before = input.value || '';
+            var after = ev && ev.type === 'blur' ? normalizeFWFinal(before) : normalizeFWLive(before);
+            if (before !== after) {
+              input.value = after;
+              try { input.setSelectionRange(after.length, after.length); } catch (_) {}
+            }
+          };
+          input.addEventListener('input', onEdit);
+          input.addEventListener('blur', onEdit);
+          onEdit();
+        }
+
+        function attachKanaHandlers(input) {
+          var toKana = (typeof toKatakanaFullWidth === 'function') ? toKatakanaFullWidth : function (x) { return x || ''; };
+          var onEdit = function (ev) {
+            var before = input.value || '';
+            var kana = toKana(before);
+            var after = ev && ev.type === 'blur' ? normalizeFWFinal(kana) : normalizeFWLive(kana);
+            if (before !== after) {
+              input.value = after;
+              try { input.setSelectionRange(after.length, after.length); } catch (_) {}
+            }
+          };
+          input.addEventListener('input', onEdit);
+          input.addEventListener('blur', onEdit);
+          onEdit();
+        }
+
+        function insertAfter(refNode, newNode) {
+          if (!refNode || !refNode.parentNode) return;
+          if (refNode.nextSibling) refNode.parentNode.insertBefore(newNode, refNode.nextSibling);
+          else refNode.parentNode.appendChild(newNode);
+        }
+
+        function lastParticipantWrap() {
+          var nodes = document.querySelectorAll('.participant-field');
+          return nodes.length ? nodes[nodes.length - 1] : null;
+        }
+
+        function anchorForInsert() {
+          var last = lastParticipantWrap();
+          if (last) return last;
+          var kanaWrap = baseKana.closest('.field') || baseKana.parentElement;
+          return kanaWrap || nameFieldWrap || form;
+        }
+
+        function placeholderForName(idx) {
+          // 姓名の間に全角スペースを入れる
+          return idx === 2 ? '船橋　二郎' : '船橋　三郎';
+        }
+        function placeholderForKana(idx) {
+          // 姓名の間に全角スペースを入れる
+          return idx === 2 ? 'フナバシ　ジロウ' : 'フナバシ　サブロウ';
+        }
+
+        function createParticipantSet(nextIndex) {
+          var wrap = document.createElement('div');
+          wrap.className = 'field participant-field';
+
+          // お名前
+          var nameLabel = document.createElement('label');
+          nameLabel.setAttribute('for', 'name-' + nextIndex);
+          nameLabel.textContent = 'お名前' + '（' + nextIndex + '人目）';
+          var nameInput = document.createElement('input');
+          nameInput.id = 'name-' + nextIndex;
+          nameInput.name = 'name-' + nextIndex;
+          nameInput.type = 'text';
+          nameInput.placeholder = placeholderForName(nextIndex);
+          copyInputAttributes(baseName, nameInput);
+          attachNameHandlers(nameInput);
+
+          // フリガナ
+          var kanaLabel = document.createElement('label');
+          kanaLabel.setAttribute('for', 'furigana-' + nextIndex);
+          kanaLabel.textContent = 'フリガナ' + '（' + nextIndex + '人目）';
+          var kanaInput = document.createElement('input');
+          kanaInput.id = 'furigana-' + nextIndex;
+          kanaInput.name = 'furigana-' + nextIndex;
+          kanaInput.type = 'text';
+          kanaInput.placeholder = placeholderForKana(nextIndex);
+          copyInputAttributes(baseKana, kanaInput);
+          attachKanaHandlers(kanaInput);
+
+          wrap.appendChild(nameLabel);
+          wrap.appendChild(nameInput);
+          wrap.appendChild(kanaLabel);
+          wrap.appendChild(kanaInput);
+
+          return wrap;
+        }
+
+        function updateButtonState() {
+          var count = document.querySelectorAll('.participant-field').length;
+          addBtn.disabled = count >= MAX_ADDITIONAL;
+        }
+
+        addBtn.addEventListener('click', function () {
+          var current = document.querySelectorAll('.participant-field').length;
+          var nextIndex = 2 + current;
+          if (nextIndex > 2 + (MAX_ADDITIONAL - 1)) return;
+
+          var set = createParticipantSet(nextIndex);
+          var anchor = anchorForInsert();
+          insertAfter(anchor, set);
+          updateButtonState();
+        });
+
+        updateButtonState();
+
+        // fetch をフックし、URLSearchParams 本文に参加者追加分を追記して送信
+        try {
+          var __origFetch = window.fetch.bind(window);
+          window.fetch = function (input, init) {
+            try {
+              if (init && init.body && typeof URLSearchParams !== 'undefined') {
+                var bodyParams = new URLSearchParams(init.body.toString());
+                var sets = document.querySelectorAll('.participant-field');
+                sets.forEach(function (wrap) {
+                  var n = wrap.querySelector('input[id^="name-"]');
+                  var k = wrap.querySelector('input[id^="furigana-"]');
+                  if (n) bodyParams.append(n.name, (n.value || '').trim());
+                  if (k) bodyParams.append(k.name, (k.value || '').trim());
+                });
+                var nextInit = Object.assign({}, init, { body: bodyParams });
+                return __origFetch(input, nextInit);
+              }
+            } catch (_) {}
+            return __origFetch(input, init);
+          };
+        } catch (_) {}
+
+      } catch (_) {}
+    })();
+  </script>
+  <script>
+    // 表示調整: 業種/協業したい事業者の例を上書き
+    (function(){
+      try {
+        var industry = document.getElementById('industry');
+        if (industry) {
+          industry.setAttribute('placeholder', '税理士、行政書士 など');
+          industry.setAttribute('title', '全角で入力してください（例: 税理士、行政書士）');
+        }
+        var partners = document.getElementById('partners');
+        if (partners) {
+          partners.setAttribute('placeholder', '税理士、行政書士 など（任意）');
+        }
+      } catch (_) {}
+    })();
+  </script>
 </body>
 </html>
